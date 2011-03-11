@@ -22,13 +22,6 @@ public class LibraryReader
 	 * @throws IOException 
 	 * @throws IOException 
 	 */
-	public LibraryReader() throws IOException {
-		read(new File("SongList.csv"));
-		writeFile(new File("SongList.csv"));
-	}
-	public static void main(String[]args) throws IOException {
-		LibraryReader lr = new LibraryReader();
-	}
 	public static MusicLib read(File libraryFile) throws IOException
 	{
 		String fileLine = null;
