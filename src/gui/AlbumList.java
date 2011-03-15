@@ -9,6 +9,8 @@ import integration.Album;
 import integration.MusicLib;
 
 import javax.swing.JList;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 public class AlbumList extends JList
 {
@@ -16,16 +18,25 @@ public class AlbumList extends JList
 	private ArrayList<Album> arrayListAlbum;
 	private LibraryMainFrame libraryMainFrame;
 	
-	public AlbumList(MusicLib lib,LibraryMainFrame libraryMainFrame)
+	public AlbumList(ArrayList<Album> list,LibraryMainFrame mainFrame)
 	{
-		super(ArrayListToArray(lib.getAlbumList()));
-		this.libraryMainFrame = libraryMainFrame;
-		this.albumList = ArrayListToArray(lib.getAlbumList());
-		this.arrayListAlbum = lib.getAlbumList();
+		super(ArrayListToArray(list));
+		this.libraryMainFrame = mainFrame;
+		this.albumList = ArrayListToArray(list);
+		this.arrayListAlbum = list;
 		
 		
+		this.addListSelectionListener(new ListSelectionListener()
+		{
+			public void valueChanged(ListSelectionEvent arg0)
+			{
+				String name = ((JList)arg0.getSource()).getSelectedValue().toString();
+				Album selected = Album.findAlbum(arrayListAlbum,name);
+				changeAlbum(selected);
+			}
+		});
 		
-		this.addMouseListener(new MouseAdapter() 
+		/*this.addMouseListener(new MouseAdapter() 
 		{
 		    public void mouseClicked(MouseEvent e) 
 		    {
@@ -34,7 +45,7 @@ public class AlbumList extends JList
 		        Album selected = Album.findAlbum(arrayListAlbum,name);
 		        changeAlbum(selected);
 		    }
-		});
+		});*/
 	}
 	
 	public void changeAlbum(Album a)

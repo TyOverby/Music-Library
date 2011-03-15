@@ -1,7 +1,11 @@
 package io;
 
 import java.io.*;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import javax.swing.JOptionPane;
@@ -13,7 +17,7 @@ public class LibraryReader
 {
 	static private MusicLib library = new MusicLib();
 	public static File fileURI;
-	
+
 	/**
 	 * Reads a file and parses it to a MusicLib object
 	 * @author James Meyers
@@ -22,8 +26,11 @@ public class LibraryReader
 	 * @throws IOException 
 	 * @throws IOException 
 	 */
+
 	public static MusicLib read(File libraryFile) throws IOException
 	{
+		
+		
 		String fileLine = null;
 		ArrayList<String> albumNames = new ArrayList<String>();
 		ArrayList<Song> songList = new ArrayList<Song>();
@@ -79,29 +86,42 @@ public class LibraryReader
 			library.addAlbum(newAlbum);	//Adds the Album to the library
 			for (s = 0; s < songList.size(); s++) {
 				if (songList.get(s).getAlbumStr().equals(albumNames.get(a))) {
-					newAlbum.addSong(songList.get(s));	//Adds the Song to the Album
+					
+						newAlbum.addSong(songList.get(s));	//Adds the Song to the Album
 				}
 			}
 		}
 		fReader.close();	//Closes file
 		bReader.close();	//Likewise
-		fileURI = libraryFile;
+		
+		fileURI=libraryFile;
+	
 		return library;		//Returns the MusicLib object
 	}
 	public static MusicLib writeFile(File originalFile) throws IOException {
-		
+
 		StringBuffer buffer = new StringBuffer();
 		FileWriter fw = new FileWriter(originalFile);
 		BufferedWriter bw = new BufferedWriter(fw);
 		//writes the newContents to a file
 		//writes the headers
 		bw.write("title,album,artist,duration");
+		Collator collator = Collator.getInstance(Locale.US);
+
+		List<String> lines  = new ArrayList<String>();
+
 		for(Song s:library.getAllSongs())
 		{
 			String songLine = s.getTitle() + "," + s.getAlbum() + "," + s.getArtist() + "," + s.getDuration();
-			buffer.append(System.getProperty("line.separator")).append(songLine);
-			
+			lines.add(songLine);
 		}
+		Collections.sort(lines, collator);
+
+		for (int i = 0; i < lines.size(); i++) {
+			String sorted = lines.get(i);
+			buffer.append(System.getProperty("line.separator")).append(sorted);
+		}
+
 		bw.write(buffer.toString());
 		bw.close();
 		fw.close();

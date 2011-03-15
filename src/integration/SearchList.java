@@ -44,5 +44,19 @@ public class SearchList
 		return albumList;
 	}
 	
+	public void print()
+	{
+		System.out.println("Albums Matching");
+		for(Album a: this.getAlbumList())
+		{
+			System.out.println("\t"+a.getAlbumTitle());
+		}
+		System.out.println("Songs Matching");
+		for(Song s: this.getSongList())
+		{
+			System.out.println("\t"+s.getTitle());
+		}
+		
+	}
 	
 }

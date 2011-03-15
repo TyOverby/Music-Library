@@ -2,6 +2,7 @@ package gui;
 
 import integration.Album;
 import integration.MusicLib;
+import integration.SearchList;
 import integration.Song;
 import io.FileOpener;
 import io.LibraryReader;
@@ -11,27 +12,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 
-import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
 
-import javax.swing.JWindow;
 
 public class LibraryMainFrame extends JFrame
 {
 	private MusicLib library;
+	private LibraryMainFrame mainFrame;
 
 	Splashscreen splash = new Splashscreen(4000);
 	private JPanel buttonPanel = new JPanel();
@@ -47,12 +40,14 @@ public class LibraryMainFrame extends JFrame
 	private AlbumList aList;
 
 	private final ClassLoader cldr = this.getClass().getClassLoader();
-	private final ImageIcon addImage = new ImageIcon(cldr.getResource("assets/addicon.gif"));
+	private final ImageIcon addImage = null; // new ImageIcon(cldr.getResource("assets/addicon.gif"));
 	private final ImageIcon logo = new ImageIcon(cldr.getResource("assets/logo.gif"));
 	//All of the buttons that go on the button panel
 	private JButton addAlbumButton = new JButton("Add Album",addImage);
 	private JButton addTrackButton = new JButton("Add Track",addImage);
-	private JButton deleteMusicButton = new JButton("Delete Music",addImage);
+	private JButton deleteSongButton = new JButton("Remove Song",addImage);
+	private JButton deleteAlbumButton = new JButton("Remove Album",addImage);
+	private JButton printLibButton = new JButton ("Print Library",addImage);
 	private JButton searchButton = new JButton("Search",addImage);
 	private JButton importLibraryButton = new JButton ("Import Library",addImage);
 	private JLabel tccLabel = new JLabel(logo);
@@ -65,10 +60,8 @@ public class LibraryMainFrame extends JFrame
 
 	public LibraryMainFrame(MusicLib library) 
 	{
-
+		this.mainFrame = this;
 		this.library = library;
-		Splashscreen splash = new Splashscreen(2000);
-		//splash.showSplash();
 
 		//add the button panel to the top
 		addButtons();
@@ -80,7 +73,7 @@ public class LibraryMainFrame extends JFrame
 		this.add(mainScrollPanel,BorderLayout.CENTER);	//add the scroll pane to the main frame
 
 		//add the album list on the side
-		aList = new AlbumList(library, this);
+		aList = new AlbumList(library.getAlbumList(), this);
 		albumPanel.add(aList,BorderLayout.CENTER);		//adds the JList to the main pane
 		albumPanel.add(viewLibraryButton,BorderLayout.NORTH);
 		albumScrollPanel = new JScrollPane(albumPanel); //add the main panel to the scroll pane 
@@ -102,12 +95,23 @@ public class LibraryMainFrame extends JFrame
 		this.setTitle("TCC Music Library Version 1.0");
 		this.setMinimumSize(new Dimension(WINDOW_WIDTH,WINDOW_HEIGHT));
 	}
-
 	public void updateMusicLib(MusicLib library)
 	{
 		this.library = library;
 	}
 
+	public void updateTable()
+	{
+		updateTable(this.library);
+		try {
+			LibraryReader.writeFile(LibraryReader.fileURI);
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(null, "Error saving file");
+			e.printStackTrace();
+		}
+		hack();
+	}
+	
 	/**
 	 * Updates the song table with the specified library
 	 * @param library the library to update it with
@@ -122,23 +126,16 @@ public class LibraryMainFrame extends JFrame
 		this.add(this.mainScrollPanel,BorderLayout.CENTER);
 		
 		this.hack();//YAY Hacking!
+		
 		try {
+		
 			LibraryReader.writeFile(LibraryReader.fileURI);
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(null, "Error saving file");
 			e.printStackTrace();
 		}
 	}
-	public void updateTable()
-	{
-		updateTable(this.library);
-		try {
-			LibraryReader.writeFile(LibraryReader.fileURI);
-		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null, "Error saving file");
-			e.printStackTrace();
-		}
-	}
+	
 	/**
 	 * Updates the song table with the specified album
 	 * @param album
@@ -151,21 +148,41 @@ public class LibraryMainFrame extends JFrame
 		this.add(this.mainScrollPanel,BorderLayout.CENTER);
 		this.hack();//YAY Hacking!
 	}
+	
+	public void updateTable(SearchList search)
+	{
+		this.mTable = new MusicTable(search.getSongList());
+		this.remove(this.mainScrollPanel);
+		this.mainScrollPanel = new JScrollPane(mTable);
+		this.add(this.mainScrollPanel,BorderLayout.CENTER);
+		this.hack();//YAY Hacking!
+	}
 
+	public void updateList()
+	{
+		updateList(this.library);
+		
+	}
 	public void updateList(MusicLib library)
 	{
-		this.aList = new AlbumList(library,this);
+		this.aList = new AlbumList(library.getAlbumList(),this);
 		albumPanel.removeAll();
 		albumPanel.add(viewLibraryButton,BorderLayout.NORTH);
 		albumPanel.add(this.aList,BorderLayout.CENTER);
 		
 		hack();//OH NOES
 	}
-	public void updateList()
+	public void updateList(SearchList search)
 	{
-		updateList(this.library);
+		this.aList = new AlbumList(search.getAlbumList(),this);
+		albumPanel.removeAll();
+		albumPanel.add(viewLibraryButton,BorderLayout.NORTH);
+		albumPanel.add(this.aList,BorderLayout.CENTER);
 		
+		hack();//OH NOES
+
 	}
+	
 	
 	/**
 	 * Makes the panel change size.  Don't ask why.  Everything will break if this doesn't work
@@ -190,22 +207,25 @@ public class LibraryMainFrame extends JFrame
 	 */
 	private void addButtons()
 	{
-
+		
 		//Add all of the buttons to their panel
 		buttonPanel.add(addAlbumButton); 
 		buttonPanel.add(addTrackButton);
-		buttonPanel.add(deleteMusicButton);
+		buttonPanel.add(deleteSongButton);
+		buttonPanel.add(deleteAlbumButton);
 		buttonPanel.add(searchButton);
 		buttonPanel.add(importLibraryButton);
+		buttonPanel.add(printLibButton);
 		buttonPanel.add(tccLabel);
-
+		
 		//Set up the action listeners for all of the buttons
 		addAlbumButton.addActionListener(new AddAlbumListener());
 		addTrackButton.addActionListener(new AddTrackListener());
 		searchButton.addActionListener(new SearchListener());
 		importLibraryButton.addActionListener(new ImportLibraryListener());
-		deleteMusicButton.addActionListener(new DeleteMusicListener());
-
+		deleteAlbumButton.addActionListener(new DeleteAlbumListener());
+		deleteSongButton.addActionListener(new DeleteTrackListener());
+		printLibButton.addActionListener(new PrintLibListener());
 		viewLibraryButton.addActionListener(new ViewAllListener());
 
 	}
@@ -272,12 +292,20 @@ public class LibraryMainFrame extends JFrame
 					return;
 				}
 			}
+			
+			Album newAlbum = new Album(album);
+			newAlbum.addSong(song);
+			library.addAlbum(newAlbum);
+			
+			updateTable();
+			updateList();
+			
 		}
 	}
 
 	private class SearchListener implements ActionListener{
 		public void actionPerformed(ActionEvent e){
-			JOptionPane.showMessageDialog(null, "Replace with Search Function");
+			new SearchWindow(library,mainFrame);
 		}
 	}
 
@@ -285,9 +313,12 @@ public class LibraryMainFrame extends JFrame
 		public void actionPerformed(ActionEvent e){
 			try 
 			{
-				MusicLib l = FileOpener.getLib();
-				updateList(l);
-				updateTable(l);
+				MusicLib l = FileOpener.getLib2();
+				if(l.getAlbumList().size()>0)
+				{
+					updateList(l);
+					updateTable(l);
+				}
 			} 
 			catch (IOException e1) 
 			{				
@@ -296,18 +327,54 @@ public class LibraryMainFrame extends JFrame
 		}
 	}
 
-	private class DeleteMusicListener implements ActionListener{
-		public void actionPerformed(ActionEvent e){
-			JOptionPane.showMessageDialog(null, "Replace with Delete Music Function");
-		}
-	}
+	private class DeleteTrackListener implements ActionListener{
+        public void actionPerformed(ActionEvent e){
+                String tracktodelete;
+                tracktodelete = JOptionPane.showInputDialog(null, "Enter track you wish to delete. ");
+                for(Song s:library.getAllSongs())
+                {
+                        if(s.getTitle().equals(tracktodelete))
+                        {
+                                s.delSong();
+                        }
+                }
+                updateTable();
+                hack();
+        }
+
+}
+	
+	private class DeleteAlbumListener implements ActionListener{
+        public void actionPerformed(ActionEvent e){
+                String albumtodelete;
+                albumtodelete = JOptionPane.showInputDialog(null, "Enter album you wish to delete.");
+                for(Album a:library.getAlbumList())
+                {
+                        if(a.getAlbumTitle().equals(albumtodelete))
+                        {
+                                library.removeAlbum(a);
+                                System.out.println("removed");
+                                updateList();
+                                updateTable();
+                                hack();
+                                return;
+                        }
+                }
+                
+        }
+}
 
 	private class ViewAllListener implements ActionListener{
 		public void actionPerformed(ActionEvent e){
-			updateTable(library);
+			updateTable();
+			updateList();
 		}
 	}
-
+	private class PrintLibListener implements ActionListener{
+		public void actionPerformed(ActionEvent e){
+			PrintWindow printWindow = new PrintWindow(new MusicTable(mTable));
+		}
+	}
 	private String getInput(String message)
 	{
 		while(true)

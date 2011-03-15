@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 
 import gui.LibraryMainFrame;
+import gui.Splashscreen;
 
 /**
  * Doesn't really do anything right now.
@@ -16,11 +17,12 @@ public class EntryPoint {
 
 	public static void main(String[] args) throws IOException 
 	{
-		MusicLib library = FileOpener.getLib();
+		Splashscreen splash = new Splashscreen(2000);
+		splash.showSplash();
+		
+		MusicLib library = FileOpener.getLib1();
 
 		new gui.LibraryMainFrame(library);
-
-				
 	}
 
 }
